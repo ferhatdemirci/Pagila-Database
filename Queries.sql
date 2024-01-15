@@ -362,8 +362,122 @@ JOIN film USING (film_id)
 WHERE actor.first_name = 'Johnny' AND actor.last_name = 'Depp';
 
 
+--En Çok Gelir Getiren Kategorilerdeki Filmlerin Ortalama İzlenme Süreleri ve Kiralama Sayıları:
+
+SELECT 
+    category.name AS kategori,
+    AVG(film.length) AS ortalama_izlenme_suresi,
+    COUNT(rental.rental_id) AS kiralama_sayisi
+FROM 
+    category
+    JOIN film_category USING (category_id)
+    JOIN inventory USING (film_id)
+    JOIN rental USING (inventory_id)
+    JOIN payment USING (rental_id)
+GROUP BY 
+    kategori
+ORDER BY 
+    kiralama_sayisi DESC, ortalama_izlenme_suresi DESC;
 
 
+--Aktif Olarak Kiralanan Filmler Arasında En Uzun Süreli Kiralamalar:
+
+SELECT 
+    film.title,
+    rental.rental_date,
+    rental.return_date,
+    TIMESTAMPDIFF(DAY, rental.rental_date, rental.return_date) AS kiralama_suresi_gun
+FROM 
+    film
+    JOIN inventory USING (film_id)
+    JOIN rental USING (inventory_id)
+WHERE 
+    rental.return_date IS NOT NULL
+ORDER BY 
+    kiralama_suresi_gun DESC
+LIMIT 5;
+
+
+--Müşterilerin Ortalama Harcamaları ve En Çok Harcama Yapan Müşteri:
+
+
+SELECT 
+    customer.customer_id,
+    CONCAT(customer.first_name, ' ', customer.last_name) AS musteri,
+    AVG(payment.amount) AS ortalama_harcama,
+    MAX(payment.amount) AS en_cok_harcama
+FROM 
+    customer
+    JOIN payment USING (customer_id)
+GROUP BY 
+    customer.customer_id, musteri
+ORDER BY 
+    ortalama_harcama DESC;
+
+
+--Bir Şehirdeki Aktif Olarak Kiralanan Filmlerin Sayısı ve Ortalama İzlenme Süreleri:
+SELECT 
+    city,
+    COUNT(DISTINCT rental.inventory_id) AS kiralanan_film_sayisi,
+    AVG(film.length) AS ortalama_izlenme_suresi
+FROM 
+    city
+    JOIN address USING (city_id)
+    JOIN customer USING (address_id)
+    JOIN rental USING (customer_id)
+    JOIN inventory USING (inventory_id)
+    JOIN film USING (film_id)
+GROUP BY 
+    city
+ORDER BY 
+    kiralanan_film_sayisi DESC, ortalama_izlenme_suresi DESC;
+
+--Belirli Bir Tarihte En Çok Gelir Getiren Filmler:
+
+SELECT 
+    film.title,
+    SUM(payment.amount) AS toplam_gelir
+FROM 
+    film
+    JOIN inventory USING (film_id)
+    JOIN rental USING (inventory_id)
+    JOIN payment USING (rental_id)
+WHERE 
+    payment.payment_date BETWEEN '2023-01-01' AND '2023-12-31'
+GROUP BY 
+    film.title
+ORDER BY 
+    toplam_gelir DESC
+LIMIT 5;
+--Müşterilerin En Son Kiraladıkları Filmin Kategorisi ve Bu Kategorideki Diğer Filmlerden Kaç Tane Daha Kiraladıkları:
+WITH son_kiralamalar AS (
+    SELECT 
+        customer_id,
+        MAX(rental_date) AS son_kiralama_tarihi,
+        FIRST_VALUE(inventory.film_id) OVER (PARTITION BY customer_id ORDER BY MAX(rental_date) DESC) AS son_kiralanan_film
+    FROM 
+        rental
+        JOIN inventory USING (inventory_id)
+    GROUP BY 
+        customer_id
+)
+
+SELECT 
+    c.customer_id,
+    CONCAT(c.first_name, ' ', c.last_name) AS musteri,
+    f.title AS son_kiralanan_film,
+    f.category_id AS son_kiralanan_film_kategorisi,
+    COUNT(f2.film_id) AS kategori_film_sayisi
+FROM 
+    son_kiralamalar s
+    JOIN customer c ON s.customer_id = c.customer_id
+    JOIN film f ON s.son_kiralanan_film = f.film_id
+    JOIN film f2 ON f.category_id = f2.category_id
+GROUP BY 
+    c.customer_id, musteri, son_kiralanan_film, son_kiralanan_film_kategorisi
+ORDER BY 
+    s.son_kiralama_tarihi DESC
+LIMIT 1;
 
 
 
