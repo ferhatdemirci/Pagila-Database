@@ -1,3 +1,7 @@
+--https://www.dbdiagrams.com/postgresql/online-er-diagram-postgresql-pagila-sample/
+
+
+
 --1a. You need a list of all the actors’ first name and last name
 --Tüm aktörlerin ad ve soyadlarının bir listesine ihtiyacınız var.
 
@@ -291,4 +295,6 @@ ORDER BY
 	title
 LIMIT 5;
 
+-- Full textseach örneği
+SELECT * FROM film WHERE fulltext @@ to_tsquery('fate&india'); 
 
