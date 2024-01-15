@@ -1,15 +1,20 @@
 --1a. You need a list of all the actors’ first name and last name
+--Tüm aktörlerin ad ve soyadlarının bir listesine ihtiyacınız var.
+
 Select first_name,last_name
 from actor;
 --rows 200
 
 
 --1b. Display the first and last name of each actor in a single column in upper case letters. Name the column Actor Name
+--Her aktörün adını ve soyadını tek bir sütunda büyük harflerle görüntüleyin.
 Select CONCAT(First_Name,' ',Last_Name) as Actor_Name
 from actor;
 --rows 200
 
 --2a. You need to find the id, first name, and last name of an actor, of whom you know only the first name of "Joe." What is one query would you use to obtain this information?
+--Sadece adını bildiğiniz "Joe" aktörünün kimliğini, adını ve soyadını bulmanız gerekiyor.
+
 Select actor_id,first_name, last_name
 from actor
 where first_name like upper('Joe%');
@@ -17,6 +22,8 @@ where first_name like upper('Joe%');
 
 
 --2b. Find all actors whose last name contain the letters GEN. Make this case insensitive
+--Soyadı GEN harflerini içeren tüm aktörleri bulun. Bu büyük/küçük harfe duyarsız hale getirin
+
 Select actor_id,first_name, last_name
 from actor
 where last_name like upper('%gen%');
@@ -32,6 +39,7 @@ order by last_name, first_name;
 
 
 --2d. Using IN, display the country_id and country columns of the following countries: Afghanistan, Bangladesh, and China:
+--IN'i kullanarak şu ülkelerin country_id ve ülke sütunlarını görüntüleyin: Afganistan, Bangladeş ve Çin:
 
 Select country_id, country
 from country
@@ -55,12 +63,16 @@ ALTER TABLE actor
 DROP COLUMN middle_name;
 
 --4a. List the last names of actors, as well as how many actors have that last name.
+--Aktörlerin soyadlarını ve aynı soyadına sahip kaç aktörün olduğunu listeleyin.
+
 Select last_name,count(*)
 from actor
 group by last_name
 order by count(*) desc;
 
 --4b. List last names of actors and the number of actors who have that last name, but only for names that are shared by at least two actors
+--Aktörlerin soyadlarını ve bu soyadına sahip aktörlerin sayısını listeleyin; ancak yalnızca en az iki aktör tarafından paylaşılan isimler için
+
 Select last_name,count(*)
 from actor
 group by last_name
@@ -86,6 +98,8 @@ where first_name in ('HARPO','GROUCHO'));
 
 
 --6a. Use a JOIN to display the first and last names, as well as the address, of each staff member. Use the tables staff and address:
+--Her personelin adını, soyadını ve adresini görüntülemek için JOIN kullanın. Tablodaki personeli ve adresi kullanın:
+
 Select s.first_name,s.last_name,a.address, a.address2, a.district, a.city_id,a.postal_code
 from staff s
 left join address a
@@ -102,6 +116,7 @@ where payment_date <= '2007-01-31'
 group by s.staff_id,s.first_name, s.last_name;
 
 --6c. List each film and the number of actors who are listed for that film. Use tables film_actor and film. Use inner join.
+-- Her filmi ve o filmde oynayan oyuncu sayısını getirin
 Select f.film_id, f.title as Film_Name, count(actor_id) as No_of_Actors
 from film f
 join film_actor fa 
@@ -112,6 +127,8 @@ order by f.film_id;
 
 
 --6d. How many copies of the film Hunchback Impossible exist in the inventory system?
+-- Envanter sisteminde Kambur İmkansız filminin kaç kopyası var?
+
 Select f.title as Film_Name, count(inventory_id)
 from inventory inv
 join film f
@@ -122,6 +139,7 @@ group by f.title;
 
 
 --6e. Using the tables payment and customer and the JOIN command, list the total paid by each customer. List the customers alphabetically by last name:
+-- En çok ödeme yapan müşterileri büyükten küçüğe doğru sıralayın.
 select c.customer_id,c.first_name, c.last_name, sum(amount) as Total_paid
 from customer c
 Left join payment p
