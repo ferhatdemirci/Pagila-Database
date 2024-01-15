@@ -298,3 +298,72 @@ LIMIT 5;
 -- Full textseach örneği
 SELECT * FROM film WHERE fulltext @@ to_tsquery('fate&india'); 
 
+--En Çok Kiralanan 3 Film ve Kiralama Sayılarını veren sorguyu yazınız?
+
+SELECT film_id, title, COUNT(rental_id) AS kiralama_sayisi
+FROM rental
+JOIN inventory USING (inventory_id)
+JOIN film USING (film_id)
+GROUP BY film_id, title
+ORDER BY kiralama_sayisi DESC
+LIMIT 3;
+
+
+-- Aktif olarak kiralanan filmler
+SELECT film.title, inventory.inventory_id
+FROM film
+JOIN inventory USING (film_id)
+JOIN rental USING (inventory_id)
+WHERE rental.return_date IS NULL;
+
+--En çok harcama yapan (Toplam harcama tutarı en yüksek olan) müşteri isimlerini getir.
+SELECT CONCAT(first_name, ' ', last_name) AS musteri, SUM(amount) AS toplam_tutar
+FROM customer
+JOIN payment USING (customer_id)
+GROUP BY musteri;
+
+--Film Kategorilerinin ortalama izlenme sürelerini analiz etmek istiyoruz. En uzun süreden aşağı doğru sıralayacak sorguyu yaz.
+SELECT category.name AS kategori, AVG(film.length) AS ortalama_izlenme_suresi
+FROM film
+JOIN film_category USING (film_id)
+JOIN category USING (category_id)
+GROUP BY kategori;
+
+--En çok izlenen 5 filmi getir
+SELECT title, release_year,*
+FROM film
+ORDER BY last_update DESC
+LIMIT 5;
+
+--En çok müşterimiz olan 10 şehri getir
+SELECT city, COUNT(customer_id) AS musteri_sayisi
+FROM customer
+GROUP BY city
+ORDER BY musteri_sayisi DESC
+LIMIT 10;
+
+--Toplam geliri en yüksek 3 kategoriyi göster
+
+SELECT category.name AS kategori, SUM(payment.amount) AS toplam_gelir
+FROM category
+JOIN film_category USING (category_id)
+JOIN inventory USING (film_id)
+JOIN rental USING (inventory_id)
+JOIN payment USING (rental_id)
+GROUP BY kategori
+ORDER BY toplam_gelir DESC
+LIMIT 3;
+
+--Johnny Depp 'in oynadığı filmlerin listes
+SELECT actor.first_name, actor.last_name, film.title, film.release_year
+FROM actor
+JOIN film_actor USING (actor_id)
+JOIN film USING (film_id)
+WHERE actor.first_name = 'Johnny' AND actor.last_name = 'Depp';
+
+
+
+
+
+
+
