@@ -450,34 +450,43 @@ ORDER BY
     toplam_gelir DESC
 LIMIT 5;
 --Müşterilerin En Son Kiraladıkları Filmin Kategorisi ve Bu Kategorideki Diğer Filmlerden Kaç Tane Daha Kiraladıkları:
-WITH son_kiralamalar AS (
-    SELECT 
-        customer_id,
-        MAX(rental_date) AS son_kiralama_tarihi,
-        FIRST_VALUE(inventory.film_id) OVER (PARTITION BY customer_id ORDER BY MAX(rental_date) DESC) AS son_kiralanan_film
-    FROM 
-        rental
-        JOIN inventory USING (inventory_id)
-    GROUP BY 
-        customer_id
+WITH SonKiralama AS (
+    SELECT
+        r.customer_id,
+        i.film_id,
+        MAX(r.rental_date) AS son_kiralama_tarihi
+    FROM
+        rental r
+        JOIN inventory i ON r.inventory_id = i.inventory_id
+    GROUP BY
+        r.customer_id, i.film_id
 )
-
-SELECT 
+SELECT
     c.customer_id,
-    CONCAT(c.first_name, ' ', c.last_name) AS musteri,
-    f.title AS son_kiralanan_film,
-    f.category_id AS son_kiralanan_film_kategorisi,
-    COUNT(f2.film_id) AS kategori_film_sayisi
-FROM 
-    son_kiralamalar s
-    JOIN customer c ON s.customer_id = c.customer_id
-    JOIN film f ON s.son_kiralanan_film = f.film_id
-    JOIN film f2 ON f.category_id = f2.category_id
-GROUP BY 
-    c.customer_id, musteri, son_kiralanan_film, son_kiralanan_film_kategorisi
-ORDER BY 
-    s.son_kiralama_tarihi DESC
-LIMIT 1;
+    c.first_name || ' ' || c.last_name AS customer_name,
+    cat.name AS son_kiralanan_kategori,
+	(
+	  	select count(*) from rental r1
+		JOIN inventory i1 ON r1.inventory_id = i1.inventory_id
+		JOIN film_category fc1 ON i1.film_id = fc1.film_id
+		where fc1.category_id = cat.category_id and r1.customer_id = c.customer_id
+	) Son_Kiraladigi_Kategoriden_Bugune_kadar_Kactane_Kiraladi
+FROM
+    customer c
+    JOIN SonKiralama sk ON c.customer_id = sk.customer_id
+    JOIN inventory i ON sk.film_id = i.film_id
+    JOIN film_category fc ON i.film_id = fc.film_id
+    JOIN category cat ON fc.category_id = cat.category_id
+WHERE
+    sk.son_kiralama_tarihi = (
+        SELECT MAX(rental_date)
+        FROM rental
+        WHERE customer_id = c.customer_id
+    )
+GROUP BY
+    c.customer_id, customer_name, cat.name,cat.category_id
+ORDER BY
+    c.customer_id;
 
 
 
